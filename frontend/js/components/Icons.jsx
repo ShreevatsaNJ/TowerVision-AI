@@ -8,6 +8,15 @@ const IconTower = ({ size = 20, color = 'currentColor' }) => (
   </svg>
 );
 
+const IconTowerVision = ({ size = 24, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 4 8 28h16L16 4Z"></path>
+    <path d="M16 5v23M5.5 12h21M10.7 20h10.6M9.3 24h13.4"></path>
+    <path d="m10.7 20 10.6-8M21.3 20l-10.6-8"></path>
+    <circle cx="16" cy="12" r="1.7" fill={color} stroke="none"></circle>
+  </svg>
+);
+
 const IconUpload = ({ size = 20, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -181,6 +190,7 @@ const IconArrowDown = ({ size = 18, color = 'currentColor' }) => (
 );
 
 window.IconTower = IconTower;
+window.IconTowerVision = IconTowerVision;
 window.IconUpload = IconUpload;
 window.IconQuality = IconQuality;
 window.IconYolo = IconYolo;

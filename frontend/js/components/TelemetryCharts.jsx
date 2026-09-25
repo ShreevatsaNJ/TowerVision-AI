@@ -1,7 +1,7 @@
 // TelemetryCharts Component — Multi-axial Image Quality Radar & Component Inventory Charts
 const { useEffect, useRef } = React;
 
-function TelemetryCharts({ qualityData, detectionSummary, activeCategory, onSelectCategory }) {
+function TelemetryCharts({ qualityData, detectionSummary }) {
   const radarChartRef = useRef(null);
   const inventoryChartRef = useRef(null);
   const confidenceChartRef = useRef(null);
@@ -10,44 +10,38 @@ function TelemetryCharts({ qualityData, detectionSummary, activeCategory, onSele
   const inventoryInstance = useRef(null);
   const confidenceInstance = useRef(null);
 
-  // 1. Quality Radar Chart
   useEffect(() => {
     if (!radarChartRef.current || !window.Chart) return;
-
-    if (radarInstance.current) {
-      radarInstance.current.destroy();
-    }
+    if (radarInstance.current) radarInstance.current.destroy();
 
     const metrics = qualityData?.metrics;
-    const blurScore = metrics ? Math.min(100, (metrics.laplacian_variance / 200.0) * 100) : 0;
-    const brightScore = metrics ? Math.max(0, 100 - Math.abs(metrics.mean_brightness - 128) * (100 / 128)) : 0;
-    const contrastScore = metrics ? Math.min(100, (metrics.contrast_rms / 60.0) * 100) : 0;
-    const compositeScore = metrics?.composite_health_score || 0;
-    const resScore = metrics && metrics.width >= 1000 ? 95 : (metrics && metrics.width >= 400 ? 70 : 30);
+    const resolution = metrics?.resolution || [0, 0];
+    const blurScore = metrics ? Math.min(100, (metrics.blur_score / 250) * 100) : 0;
+    const brightness = metrics?.brightness_mean ?? 0;
+    const brightScore = metrics ? Math.max(0, 100 - Math.abs(brightness - 128) * (100 / 128)) : 0;
+    const contrastScore = metrics ? Math.min(100, (metrics.contrast_score / 75) * 100) : 0;
+    const resolutionScore = Math.min(100, (resolution[0] * resolution[1] / (1920 * 1080)) * 100);
+    const compositeScore = metrics?.composite_health_score ?? 0;
 
-    const ctx = radarChartRef.current.getContext('2d');
-    radarInstance.current = new Chart(ctx, {
+    radarInstance.current = new Chart(radarChartRef.current.getContext('2d'), {
       type: 'radar',
       data: {
-        labels: ['Sharpness (Focus)', 'Luminance Balance', 'RMS Contrast', 'Resolution Fidelity', 'Composite Health'],
+        labels: ['Sharpness', 'Exposure', 'Contrast', 'Resolution', 'Overall Quality'],
         datasets: [
           {
-            label: 'Image Telemetry',
-            data: [blurScore, brightScore, contrastScore, resScore, compositeScore],
-            backgroundColor: 'rgba(30, 58, 95, 0.15)',
-            borderColor: '#1e3a5f',
-            pointBackgroundColor: '#1e3a5f',
-            pointBorderColor: '#ffffff',
-            pointHoverBackgroundColor: '#ffffff',
-            pointHoverBorderColor: '#1e3a5f',
+            label: 'Photo quality',
+            data: [blurScore, brightScore, contrastScore, resolutionScore, compositeScore],
+            backgroundColor: 'rgba(22, 138, 138, 0.18)',
+            borderColor: '#168a8a',
+            pointBackgroundColor: '#168a8a',
             borderWidth: 2,
             pointRadius: 4
           },
           {
-            label: 'Acceptable Baseline',
-            data: [50, 50, 42, 60, 60],
-            backgroundColor: 'rgba(46, 125, 50, 0.08)',
-            borderColor: 'rgba(46, 125, 50, 0.6)',
+            label: 'Reference level',
+            data: [50, 50, 40, 60, 60],
+            backgroundColor: 'rgba(200, 100, 70, 0.08)',
+            borderColor: 'rgba(200, 100, 70, 0.6)',
             borderDash: [4, 4],
             borderWidth: 1.5,
             pointRadius: 0
@@ -61,10 +55,7 @@ function TelemetryCharts({ qualityData, detectionSummary, activeCategory, onSele
           r: {
             angleLines: { color: 'rgba(45, 38, 30, 0.12)' },
             grid: { color: 'rgba(45, 38, 30, 0.08)' },
-            pointLabels: {
-              color: '#595045',
-              font: { family: 'Plus Jakarta Sans', size: 10, weight: 'bold' }
-            },
+            pointLabels: { color: '#595045', font: { family: 'Plus Jakarta Sans', size: 11, weight: 'bold' } },
             ticks: { display: false, min: 0, max: 100 }
           }
         },
@@ -77,12 +68,10 @@ function TelemetryCharts({ qualityData, detectionSummary, activeCategory, onSele
       }
     });
 
-    return () => {
-      if (radarInstance.current) radarInstance.current.destroy();
-    };
+    return () => radarInstance.current?.destroy();
   }, [qualityData]);
 
-  // 2. Component Inventory Doughnut / Bar Chart
+  // Tower detections by model class
   useEffect(() => {
     if (!inventoryChartRef.current || !window.Chart) return;
 
@@ -95,6 +84,8 @@ function TelemetryCharts({ qualityData, detectionSummary, activeCategory, onSele
     const dataValues = Object.values(counts);
 
     const colorMap = {
+      'monopole_tower': '#168a8a',
+      'supporting_tower': '#c86446',
       'Tower Mast': '#7aa8c4',
       'Antenna': '#b09cd4',
       'Mount Bracket': '#6b9b7a',
@@ -107,32 +98,41 @@ function TelemetryCharts({ qualityData, detectionSummary, activeCategory, onSele
 
     const ctx = inventoryChartRef.current.getContext('2d');
     inventoryInstance.current = new Chart(ctx, {
-      type: 'doughnut',
+      type: 'bar',
       data: {
-        labels: labels.length ? labels : ['No Assets Detected'],
+        labels: labels.length ? labels : ['No detections'],
         datasets: [{
-          data: dataValues.length ? dataValues : [1],
+          data: dataValues.length ? dataValues : [0],
           backgroundColor: labels.length ? backgroundColors : ['#2c2923'],
-          borderColor: '#1a1814',
-          borderWidth: 2,
-          hoverOffset: 4
+          borderColor: '#ffffff',
+          borderWidth: 1,
+          borderRadius: 4,
+          maxBarThickness: 44
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: { color: '#94a3b8', font: { size: 11, family: 'Plus Jakarta Sans' }, boxWidth: 10 }
+        indexAxis: 'y',
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: { precision: 0, stepSize: 1, color: '#595045', font: { family: 'JetBrains Mono', size: 10 } },
+            grid: { color: 'rgba(45, 38, 30, 0.08)' }
           },
+          y: {
+            grid: { display: false },
+            ticks: { color: '#595045', font: { family: 'Plus Jakarta Sans', size: 10, weight: 'bold' } }
+          }
+        },
+        plugins: {
+          legend: { display: false },
           tooltip: {
             callbacks: {
               label: (ctx) => ` ${ctx.label}: ${ctx.raw} units`
             }
           }
-        },
-        cutout: '68%'
+        }
       }
     });
 
@@ -141,35 +141,28 @@ function TelemetryCharts({ qualityData, detectionSummary, activeCategory, onSele
     };
   }, [detectionSummary]);
 
-  // 3. Confidence Spread Histogram / Bar Chart
   useEffect(() => {
     if (!confidenceChartRef.current || !window.Chart) return;
+    if (confidenceInstance.current) confidenceInstance.current.destroy();
 
-    if (confidenceInstance.current) {
-      confidenceInstance.current.destroy();
-    }
-
-    const detections = detectionSummary?.detections || [];
-    // Buckets: 35-50%, 50-65%, 65-80%, 80-90%, 90-100%
     const buckets = [0, 0, 0, 0, 0];
-    detections.forEach(d => {
-      const c = d.confidence * 100;
-      if (c < 50) buckets[0]++;
-      else if (c < 65) buckets[1]++;
-      else if (c < 80) buckets[2]++;
-      else if (c < 90) buckets[3]++;
+    (detectionSummary?.detections || []).forEach(detection => {
+      const confidence = detection.confidence * 100;
+      if (confidence < 50) buckets[0]++;
+      else if (confidence < 65) buckets[1]++;
+      else if (confidence < 80) buckets[2]++;
+      else if (confidence < 90) buckets[3]++;
       else buckets[4]++;
     });
 
-    const ctx = confidenceChartRef.current.getContext('2d');
-    confidenceInstance.current = new Chart(ctx, {
+    confidenceInstance.current = new Chart(confidenceChartRef.current.getContext('2d'), {
       type: 'bar',
       data: {
         labels: ['35-49%', '50-64%', '65-79%', '80-89%', '90-100%'],
         datasets: [{
-          label: 'Identified Objects',
+          label: 'Detections',
           data: buckets,
-          backgroundColor: ['#64748b', '#0284c7', '#38bdf8', '#10b981', '#34d399'],
+          backgroundColor: ['#738b9b', '#168a8a', '#70aead', '#d4a03c', '#c86446'],
           borderRadius: 4
         }]
       },
@@ -179,40 +172,26 @@ function TelemetryCharts({ qualityData, detectionSummary, activeCategory, onSele
         scales: {
           x: {
             grid: { display: false },
-            ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 10 } }
+            ticks: { color: '#595045', font: { family: 'Plus Jakarta Sans', size: 10 } }
           },
           y: {
             beginAtZero: true,
-            grid: { color: 'rgba(51, 65, 85, 0.4)' },
-            ticks: { stepSize: 1, color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } }
+            ticks: { stepSize: 1, color: '#595045', font: { family: 'JetBrains Mono', size: 10 } },
+            grid: { color: 'rgba(45, 38, 30, 0.08)' }
           }
         },
-        plugins: {
-          legend: { display: false }
-        }
+        plugins: { legend: { display: false } }
       }
     });
 
-    return () => {
-      if (confidenceInstance.current) confidenceInstance.current.destroy();
-    };
+    return () => confidenceInstance.current?.destroy();
   }, [detectionSummary]);
 
   return (
     <div className="charts-grid">
-      <div className="chart-card">
+      <div className="chart-card chart-card-primary">
         <div className="chart-title">
-          <span>Quality Envelope Radar</span>
-          <small className="mono" style={{ color: '#64748b' }}>CV Telemetry</small>
-        </div>
-        <div className="chart-canvas-wrap">
-          <canvas ref={radarChartRef}></canvas>
-        </div>
-      </div>
-
-      <div className="chart-card">
-        <div className="chart-title">
-          <span>Asset Inventory Breakdown</span>
+          <span>Tower Detections by Class</span>
           <small className="mono" style={{ color: '#64748b' }}>
             {detectionSummary?.total_objects || 0} Assets
           </small>
@@ -221,11 +200,19 @@ function TelemetryCharts({ qualityData, detectionSummary, activeCategory, onSele
           <canvas ref={inventoryChartRef}></canvas>
         </div>
       </div>
-
       <div className="chart-card">
         <div className="chart-title">
-          <span>Detection Confidence Spread</span>
-          <small className="mono" style={{ color: '#64748b' }}>YOLO Distribution</small>
+          <span>Image Quality Profile</span>
+          <small className="mono">Quality metrics</small>
+        </div>
+        <div className="chart-canvas-wrap">
+          <canvas ref={radarChartRef}></canvas>
+        </div>
+      </div>
+      <div className="chart-card">
+        <div className="chart-title">
+          <span>Detection Confidence</span>
+          <small className="mono">Model results</small>
         </div>
         <div className="chart-canvas-wrap">
           <canvas ref={confidenceChartRef}></canvas>

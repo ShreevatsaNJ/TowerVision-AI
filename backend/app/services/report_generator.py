@@ -81,6 +81,8 @@ def generate_pdf_report(
         detections = detection_data.get('detections', [])
         
         d_table_data = [["ID", "Detected Component", "Confidence", "Severity", "Coordinates (x1, y1, x2, y2)"]]
+        if not detections:
+            d_table_data.append(["-", "No tower detected. The image may be blurry, too distant, or contain no supported tower.", "-", "-", "-"])
         for d in detections:
             bbox = d.get('bbox', {})
             coords = f"({bbox.get('x_min',0)}, {bbox.get('y_min',0)}, {bbox.get('x_max',0)}, {bbox.get('y_max',0)})"

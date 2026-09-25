@@ -1,7 +1,7 @@
 // App Component — 3D Interactive Neural Globe Login Page + Structured 3-Column Dashboard
 const { useState, useEffect, useRef, useCallback } = React;
 const {
-  IconTower, IconUpload, IconQuality, IconYolo, IconChart, IconCanvas, IconReport,
+  IconTower, IconTowerVision, IconUpload, IconQuality, IconYolo, IconChart, IconCanvas, IconReport,
   IconShieldAlert, IconCheck, IconX, IconUser, IconLock, IconMail, IconMouse,
   IconEye, IconEyeOff, IconZoomIn, IconZoomOut, IconDrone, IconWrench,
   IconSparkles, IconArrowRight, IconArrowDown
@@ -409,11 +409,11 @@ function LoginPage({ onLoginSuccess, onBackToHome }) {
         <div className="globe-overlay-content">
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '24px' }}>
             <div style={{
-              width: '44px', height: '44px', background: 'linear-gradient(135deg, #1e3a5f, #2c4c7c)',
-              borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '44px', height: '44px', background: 'linear-gradient(135deg, #1e3a5f, #168a8a)',
+              borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 4px 14px rgba(30, 58, 95, 0.4)'
             }}>
-              <IconTower size={24} color="#ffffff" />
+              <IconTowerVision size={26} color="#ffffff" />
             </div>
             <div>
               <span style={{ fontSize: '22px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em' }}>
@@ -577,11 +577,11 @@ function LandingPage({ onGetStarted, onNavigateLogin, currentUser, onLogout }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div style={{
             width: '44px', height: '44px',
-            background: 'linear-gradient(135deg, #1e3a5f, #2c4c7c)',
-            borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'linear-gradient(135deg, #1e3a5f, #168a8a)',
+            borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 4px 14px rgba(30, 58, 95, 0.25)'
           }}>
-            <IconTower size={24} color="#ffffff" />
+            <IconTowerVision size={26} color="#ffffff" />
           </div>
           <div>
             <div style={{ fontSize: '19px', fontWeight: 800, color: '#1c1915', letterSpacing: '-0.02em' }}>
@@ -901,7 +901,7 @@ function InspectionConsole({ onBackToLanding, currentUser, onNavigateLogin }) {
       <header className="console-header">
         <div className="brand-section">
           <div className="brand-logo-badge" onClick={onBackToLanding} style={{ cursor: 'pointer' }}>
-            <IconTower size={22} color="#ffffff" />
+            <IconTowerVision size={24} color="#ffffff" />
           </div>
           <div>
             <div className="brand-title">
@@ -1033,7 +1033,7 @@ function InspectionConsole({ onBackToLanding, currentUser, onNavigateLogin }) {
                   </div>
                 </div>
 
-                <QualityMetricsCard qualityData={qualityData} />
+                <QualityMetricsCard qualityData={qualityData} detectionSummary={inspectionResult?.detection_summary} />
               </div>
 
               {/* Column 2: Main Workstation Canvas Viewport */}

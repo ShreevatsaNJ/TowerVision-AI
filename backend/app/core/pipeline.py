@@ -79,12 +79,17 @@ class TowerVisionPipeline:
         )
         report_url = f"/api/v1/report/{inspection_id}"
         
-        health_status = "WARNING_DEFECTS_FOUND" if detection_summary.has_defects else "OPTIMAL"
+        no_tower_detected = detection_summary.total_objects == 0
+        health_status = (
+            "NO_TOWER_DETECTED" if no_tower_detected
+            else "WARNING_DEFECTS_FOUND" if detection_summary.has_defects
+            else "OPTIMAL"
+        )
         
         return InspectionResponse(
             inspection_id=inspection_id,
             filename=filename,
-            status="COMPLETED_ACCEPTED",
+            status="REJECTED_NO_DETECTIONS" if no_tower_detected else "COMPLETED_ACCEPTED",
             processed_at=timestamp,
             quality_assessment=quality_decision,
             detection_summary=detection_summary,

@@ -12,7 +12,7 @@ class Settings(BaseModel):
     PORT: int = 8000
     
     # Quality Thresholds — Only reject truly unanalyzable images
-    MIN_LAPLACIAN_BLUR_SCORE: float = 15.0   # Only reject extreme blur (canvas-generated blur test ~0-10)
+    MIN_LAPLACIAN_BLUR_SCORE: float = 80.0
     MIN_BRIGHTNESS: float = 8.0              # Only reject near-pitch-black images
     MAX_BRIGHTNESS: float = 248.0            # Only reject completely washed out white
     MIN_CONTRAST_RMS: float = 5.0            # Only reject flat uniform color images

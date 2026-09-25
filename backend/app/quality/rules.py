@@ -57,7 +57,7 @@ def evaluate_quality_rules(
     
     # ── SOFT QUALITY WARNINGS (do NOT reject, just inform) ──
     if is_usable:
-        if blur_score < 80:
+        if blur_score < settings.MIN_LAPLACIAN_BLUR_SCORE * 1.5:
             recommendations.append(f"Tip: Image sharpness is moderate ({blur_score:.0f}). A sharper capture may improve detection accuracy.")
         if brightness < 50 or brightness > 200:
             recommendations.append(f"Tip: Exposure is suboptimal (Luminance: {brightness:.0f}). Better lighting improves results.")

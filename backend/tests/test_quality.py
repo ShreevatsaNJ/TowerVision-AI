@@ -23,6 +23,29 @@ def test_sharp_vs_blurry_image():
     assert sharp_score > blur_score
     assert sharp_score > 100.0
 
+def test_moderately_blurred_image_is_rejected():
+    sharp_img = np.zeros((400, 400, 3), dtype=np.uint8)
+    for i in range(0, 400, 20):
+        sharp_img[i:i+10, :] = 255
+
+    blurry_img = cv2.GaussianBlur(sharp_img, (15, 15), 0)
+    blur_score = compute_laplacian_variance(blurry_img)
+
+    assert 15.0 < blur_score < 80.0
+
+    is_usable, reasons, _, _ = evaluate_quality_rules(
+        blur_score=blur_score,
+        brightness=120.0,
+        contrast=30.0,
+        width=400,
+        height=400,
+        shadow_clip=0.0,
+        highlight_clip=0.0
+    )
+
+    assert is_usable is False
+    assert any("too blurry" in reason.lower() for reason in reasons)
+
 def test_underexposed_image():
     # Extreme dark / unanalyzable image (mean luminance < 8.0)
     pitch_dark_img = np.full((400, 400, 3), 4, dtype=np.uint8)

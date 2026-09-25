@@ -1,7 +1,7 @@
 // QualityMetricsCard Component — Technical Telemetry & Gate Assessment
 const { useMemo } = React;
 
-function QualityMetricsCard({ qualityData }) {
+function QualityMetricsCard({ qualityData, detectionSummary }) {
   if (!qualityData) {
     return (
       <div className="card-panel">
@@ -38,6 +38,7 @@ function QualityMetricsCard({ qualityData }) {
   const reasons = qualityData.rejection_reasons || qualityData.reasons || [];
   const rawRecs = qualityData.recommendations || [];
   const recommendations = Array.isArray(rawRecs) ? rawRecs : (rawRecs ? [rawRecs] : []);
+  const noTowerDetected = qualityData.is_usable !== false && detectionSummary?.total_objects === 0;
 
   const strokeDashoffset = useMemo(() => {
     const circumference = 2 * Math.PI * 34; // r = 34
@@ -49,7 +50,7 @@ function QualityMetricsCard({ qualityData }) {
   const brightPct = Math.min(100, (brightness / 255) * 100);
   const contrastPct = Math.min(100, Math.max(5, (contrast / 70) * 100));
 
-  const isSharp = blurScore >= 15.0;
+  const isSharp = blurScore >= 80.0;
   const isVisible = brightness >= 8.0 && brightness <= 248.0;
   const isContrastOk = contrast >= 5.0;
 
@@ -113,6 +114,17 @@ function QualityMetricsCard({ qualityData }) {
           </div>
         </div>
 
+        {noTowerDetected && (
+          <div className="advisory-box">
+            <div className="advisory-header" style={{ color: 'var(--status-fail-light)' }}>
+              No Tower Detected
+            </div>
+            <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+              The image passed basic quality checks, but the model found no tower. It may be blurry, too distant, or contain no supported tower. Upload a sharper, closer tower photo.
+            </p>
+          </div>
+        )}
+
         {/* Detailed Metrics Breakdown */}
         <div className="metrics-breakdown">
           <div className="metric-item">
@@ -120,7 +132,7 @@ function QualityMetricsCard({ qualityData }) {
               <span className="metric-title">Laplacian Focus Measure (Sharpness)</span>
               <span className="metric-num">
                 {blurScore.toFixed(1)}{' '}
-                <small style={{ color: 'var(--text-tertiary)' }}>(min 15.0)</small>
+                <small style={{ color: 'var(--text-tertiary)' }}>(min 80.0)</small>
               </span>
             </div>
             <div className="meter-track">

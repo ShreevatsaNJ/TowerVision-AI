@@ -88,7 +88,6 @@ class YOLOTowerDetector:
                             color=color
                         )
                         detected_objects.append(obj)
-                        class_counts[class_name] = class_counts.get(class_name, 0) + 1
                         det_id += 1
             except Exception as ex:
                 print(f"Error during YOLO inference: {ex}")

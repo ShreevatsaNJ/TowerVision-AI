@@ -127,7 +127,7 @@ TowerVision-AI/
 #### 1. `backend/app/config.py`
 - **Purpose**: Centralized application configuration using Pydantic `BaseModel`.
 - **Key Parameters**:
-  - `MIN_LAPLACIAN_BLUR_SCORE = 100.0`: Minimum variance of Laplacian to qualify as sharp.
+  - `MIN_LAPLACIAN_BLUR_SCORE = 80.0`: Minimum variance of Laplacian to qualify as sharp.
   - `MIN_BRIGHTNESS = 40.0` & `MAX_BRIGHTNESS = 220.0`: Acceptable luminance range $(0-255)$.
   - `MIN_CONTRAST_RMS = 25.0`: Minimum standard deviation of pixel intensities.
   - `MIN_IMAGE_WIDTH` & `MIN_IMAGE_HEIGHT = 400`: Minimum resolution limits.
