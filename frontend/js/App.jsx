@@ -1001,48 +1001,54 @@ function InspectionConsole({ onBackToLanding, currentUser, onNavigateLogin }) {
 
         {/* TAB: Inspection Workstation */}
         {activeTab === 'main' && (
-          <div className="dashboard-workspace-grid">
-            {/* Column 1: Image Ingestion & Quality Gate Assessment */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <div className="card-panel">
-                <div className="card-header">
-                  <div className="card-title-group">
-                    <span className="stage-number">STAGE 1</span>
-                    <span className="card-title">Image Ingestion</span>
-                  </div>
-                </div>
-                <div className="card-body">
-                  <input type="file" ref={fileInputRef} accept="image/*" hidden onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) uploadAndInspect(e.target.files[0]);
-                  }} />
-                  <div
-                    className={'dropzone ' + (dragActive ? 'dragover' : '')}
-                    onClick={() => fileInputRef.current.click()}
-                    onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
-                  >
-                    <div className="dropzone-icon">
-                      <IconUpload size={24} color="var(--accent-primary)" />
-                    </div>
-                    <div>
-                      <div className="dropzone-text-primary">Click to Browse or Drag Image</div>
-                      <div className="dropzone-text-secondary">JPEG, PNG, WEBP (Max 25 MB)</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', width: '100%' }}>
+            {/* Top Row: Left Ingestion/Quality Gate + Right Canvas Viewport */}
+            <div className="dashboard-workspace-grid">
+              {/* Column 1: Image Ingestion & Quality Gate Assessment */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div className="card-panel">
+                  <div className="card-header">
+                    <div className="card-title-group">
+                      <span className="stage-number">STAGE 1</span>
+                      <span className="card-title">Image Ingestion</span>
                     </div>
                   </div>
+                  <div className="card-body">
+                    <input type="file" ref={fileInputRef} accept="image/*" hidden onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) uploadAndInspect(e.target.files[0]);
+                    }} />
+                    <div
+                      className={'dropzone ' + (dragActive ? 'dragover' : '')}
+                      onClick={() => fileInputRef.current.click()}
+                      onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
+                    >
+                      <div className="dropzone-icon">
+                        <IconUpload size={24} color="var(--accent-primary)" />
+                      </div>
+                      <div>
+                        <div className="dropzone-text-primary">Click to Browse or Drag Image</div>
+                        <div className="dropzone-text-secondary">JPEG, PNG, WEBP (Max 25 MB)</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                <QualityMetricsCard qualityData={qualityData} />
               </div>
 
-              <QualityMetricsCard qualityData={qualityData} />
+              {/* Column 2: Main Workstation Canvas Viewport */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0 }}>
+                <CanvasViewer
+                  imageUrl={rawImageUrl} detections={detections} highlightedId={highlightedId}
+                  onHoverDetection={setHighlightedId} minConfidence={minConfidence}
+                  onChangeMinConfidence={setMinConfidence} selectedCategory={selectedCategory}
+                  onSelectCategory={setSelectedCategory} isLoading={isLoading}
+                />
+              </div>
             </div>
 
-            {/* Column 2: Main Workstation Viewport & Inventory Table */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0 }}>
-              <CanvasViewer
-                imageUrl={rawImageUrl} detections={detections} highlightedId={highlightedId}
-                onHoverDetection={setHighlightedId} minConfidence={minConfidence}
-                onChangeMinConfidence={setMinConfidence} selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory} isLoading={isLoading}
-              />
-
+            {/* Bottom Full-Width Section: Complete Structural Asset & Defect Inventory Table */}
+            <div style={{ width: '100%' }}>
               <InventoryTable detections={detections} highlightedId={highlightedId}
                 onHoverRow={setHighlightedId} minConfidence={minConfidence} selectedCategory={selectedCategory} />
             </div>
