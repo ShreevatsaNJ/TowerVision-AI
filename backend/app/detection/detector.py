@@ -19,9 +19,9 @@ class YOLOTowerDetector:
             from ultralytics import YOLO
             # Load default lightweight YOLO or custom fine-tuned weights
             self.model = YOLO(settings.YOLO_MODEL_PATH)
-            print(f"✅ YOLO Model loaded successfully: {settings.YOLO_MODEL_PATH}")
+            print(f"[INFO] YOLO Model loaded successfully: {settings.YOLO_MODEL_PATH}")
         except Exception as e:
-            print(f"⚠️ Notice: YOLO model loading in fallback simulation mode: {e}")
+            print(f"[WARNING] Notice: YOLO model loading in fallback simulation mode: {e}")
             self.model = None
 
     def detect(self, image_np: np.ndarray) -> Tuple[DetectionSummary, np.ndarray]:
