@@ -32,6 +32,8 @@ class Settings(BaseModel):
     UPLOAD_DIR: str = os.path.join(os.path.dirname(__file__), "..", "..", "storage", "uploads")
     PROCESSED_DIR: str = os.path.join(os.path.dirname(__file__), "..", "..", "storage", "processed")
     REPORTS_DIR: str = os.path.join(os.path.dirname(__file__), "..", "..", "storage", "reports")
+    AUTH_DB_PATH: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "storage", "users.sqlite3"))
+    AUTH_COOKIE_SECURE: bool = os.getenv("AUTH_COOKIE_SECURE", "false").lower() == "true"
 
 settings = Settings()
 

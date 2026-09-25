@@ -2,8 +2,8 @@
 const { useState, useEffect, useRef, useCallback } = React;
 const {
   IconTower, IconTowerVision, IconUpload, IconQuality, IconYolo, IconChart, IconCanvas, IconReport,
-  IconShieldAlert, IconCheck, IconX, IconUser, IconLock, IconMail, IconMouse,
-  IconEye, IconEyeOff, IconZoomIn, IconZoomOut, IconDrone, IconWrench,
+  IconShieldAlert, IconCheck, IconX, IconUser, IconLock, IconMouse,
+  IconEye, IconEyeOff, IconZoomIn, IconZoomOut,
   IconSparkles, IconArrowRight, IconArrowDown
 } = window;
 
@@ -377,24 +377,49 @@ function NeuralNetworkCanvas() {
 // ─── DEDICATED LOGIN PAGE WITH STYLED 3D INTERACTIVE NEURAL GLOBE ───
 function LoginPage({ onLoginSuccess, onBackToHome }) {
   const [mode, setMode] = useState('login');
-  const [email, setEmail] = useState('alex.vance@towervision.ai');
-  const [password, setPassword] = useState('••••••••••••');
-  const [role, setRole] = useState('Structural Engineering Specialist');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onLoginSuccess({
-      name: email.split('@')[0].replace('.', ' ').replace(/\b\w/g, c => c.toUpperCase()),
-      email,
-      role
-    });
-  };
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
 
-  const handleQuickDemo = (demoType) => {
-    if (demoType === 'inspector') {
-      onLoginSuccess({ name: 'Marcus Brody', email: 'marcus.brody@towervision.ai', role: 'Drone Field Inspector' });
-    } else {
-      onLoginSuccess({ name: 'Dr. Elena Rostova', email: 'elena.rostova@towervision.ai', role: 'Chief Structural Engineer' });
+    if (mode === 'signup' && password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    if (mode === 'signup' && password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (mode === 'signup' && !/[A-Z]/.test(password)) {
+      setError('Password must include at least one uppercase letter.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`/api/v1/auth/${mode}`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password })
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        const detail = Array.isArray(result.detail)
+          ? result.detail.map(item => item.msg).join(' ')
+          : result.detail;
+        throw new Error(detail || 'Unable to authenticate. Please try again.');
+      }
+      onLoginSuccess(result.user);
+    } catch (submitError) {
+      setError(submitError.message || 'Unable to reach the authentication service.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -464,82 +489,110 @@ function LoginPage({ onLoginSuccess, onBackToHome }) {
         <div className="login-form-card">
           <div>
             <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-copper)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
-              Authentication Portal
+              ACCOUNT ACCESS
             </div>
             <h1 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
-              {mode === 'login' ? 'Sign In to TowerVision' : 'Create Engineering Account'}
+              {mode === 'login' ? 'Sign in to TowerVision' : 'Create your account'}
             </h1>
             <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              {mode === 'login' ? 'Enter your operator credentials to access the inspection workstation' : 'Set up your structural engineering team profile'}
+              {mode === 'login' ? 'Enter your username and password to continue.' : 'Choose a username and password to create your account.'}
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="auth-mode-tabs" role="tablist" aria-label="Account access">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'login'}
+              className={`auth-mode-tab ${mode === 'login' ? 'active' : ''}`}
+              onClick={() => { setMode('login'); setError(''); }}
+            >
+              Log In
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'signup'}
+              className={`auth-mode-tab ${mode === 'signup' ? 'active' : ''}`}
+              onClick={() => { setMode('signup'); setError(''); }}
+            >
+              Sign Up
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="login-auth-form">
             <div className="login-input-group">
-              <label className="login-input-label">Work Email / Operator ID</label>
+              <label className="login-input-label" htmlFor="auth-username">Username</label>
               <div className="login-input-wrapper">
-                <span className="login-input-icon"><IconMail size={16} color="var(--text-tertiary)" /></span>
-                <input type="email" className="login-input-field" value={email} onChange={e => setEmail(e.target.value)} required />
+                <span className="login-input-icon"><IconUser size={16} color="var(--text-tertiary)" /></span>
+                <input
+                  id="auth-username"
+                  name="username"
+                  type="text"
+                  className="login-input-field"
+                  autoComplete="username"
+                  minLength={3}
+                  maxLength={32}
+                  required
+                  value={username}
+                  onChange={event => setUsername(event.target.value)}
+                />
               </div>
             </div>
 
             <div className="login-input-group">
-              <label className="login-input-label">Password</label>
+              <label className="login-input-label" htmlFor="auth-password">Password</label>
               <div className="login-input-wrapper">
                 <span className="login-input-icon"><IconLock size={16} color="var(--text-tertiary)" /></span>
-                <input type="password" className="login-input-field" value={password} onChange={e => setPassword(e.target.value)} required />
+                <input
+                  id="auth-password"
+                  name="password"
+                  type="password"
+                  className="login-input-field"
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                  minLength={mode === 'signup' ? 8 : 1}
+                  maxLength={128}
+                  required
+                  value={password}
+                  onChange={event => setPassword(event.target.value)}
+                />
               </div>
+              {mode === 'signup' && (
+                <small className="auth-password-hint">Use at least 8 characters and include one uppercase letter.</small>
+              )}
             </div>
 
-            <div className="login-input-group">
-              <label className="login-input-label">Platform Role</label>
-              <select className="login-select-field" value={role} onChange={e => setRole(e.target.value)}>
-                <option value="Structural Engineering Specialist">Structural Specialist (Reviewer)</option>
-                <option value="Drone Field Inspector">Drone Field Inspector (Operator)</option>
-                <option value="Infrastructure Audit Director">Infrastructure Audit Director (Executive)</option>
-              </select>
-            </div>
+            {mode === 'signup' && (
+              <div className="login-input-group">
+                <label className="login-input-label" htmlFor="auth-confirm-password">Confirm password</label>
+                <div className="login-input-wrapper">
+                  <span className="login-input-icon"><IconLock size={16} color="var(--text-tertiary)" /></span>
+                  <input
+                    id="auth-confirm-password"
+                    name="confirm-password"
+                    type="password"
+                    className="login-input-field"
+                    autoComplete="new-password"
+                    minLength={8}
+                    maxLength={128}
+                    required
+                    value={confirmPassword}
+                    onChange={event => setConfirmPassword(event.target.value)}
+                  />
+                </div>
+              </div>
+            )}
 
-            <button type="submit" className="login-btn-submit">
-              {mode === 'login' ? 'Enter Inspection Console →' : 'Complete Registration →'}
+            {error && <div className="login-auth-error" role="alert">{error}</div>}
+
+            <button type="submit" className="login-btn-submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Please wait…' : mode === 'login' ? 'Log In' : 'Create Account'}
+              {!isSubmitting && <IconArrowRight size={18} />}
             </button>
           </form>
 
-          {/* Quick Demo Access Options */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '16px', borderTop: '1px solid var(--border-default)' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>
-              1-Click Demo Logins
-            </span>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <div className="quick-demo-card" onClick={() => handleQuickDemo('inspector')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <IconDrone size={18} color="var(--accent-primary)" />
-                  <div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>Inspector Access</div>
-                    <div style={{ fontSize: '10.5px', color: 'var(--text-tertiary)' }}>Field Operator</div>
-                  </div>
-                </div>
-                <span style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>→</span>
-              </div>
-              <div className="quick-demo-card" onClick={() => handleQuickDemo('engineer')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <IconWrench size={18} color="var(--accent-copper)" />
-                  <div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>Specialist Access</div>
-                    <div style={{ fontSize: '10.5px', color: 'var(--text-tertiary)' }}>Chief Engineer</div>
-                  </div>
-                </div>
-                <span style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>→</span>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-tertiary)' }}>
-            {mode === 'login' ? (
-              <span>Don't have an account? <a href="#" style={{ color: 'var(--accent-primary)', fontWeight: 700 }} onClick={(e) => { e.preventDefault(); setMode('register'); }}>Sign up here</a></span>
-            ) : (
-              <span>Already registered? <a href="#" style={{ color: 'var(--accent-primary)', fontWeight: 700 }} onClick={(e) => { e.preventDefault(); setMode('login'); }}>Sign in here</a></span>
-            )}
+          <div className="login-access-note">
+            Accounts are stored securely on this server. Roles are not required.
           </div>
         </div>
       </div>
@@ -608,7 +661,7 @@ function LandingPage({ onGetStarted, onNavigateLogin, currentUser, onLogout }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div
                 className="user-avatar-btn"
-                title={`${currentUser.name || 'User'} (${currentUser.email || ''})`}
+                title={currentUser.username || 'Account'}
               >
                 <IconUser size={16} color="#ffffff" />
               </div>
@@ -771,7 +824,7 @@ function LandingPage({ onGetStarted, onNavigateLogin, currentUser, onLogout }) {
             Get Started Now →
           </button>
           <p style={{ marginTop: '14px', fontSize: '13px', color: '#877c6e', fontWeight: 500 }}>
-            No signup required. Select your role and start inspecting in seconds.
+            Sign in or create an account to open the inspection console.
           </p>
         </div>
       </section>
@@ -786,7 +839,7 @@ function LandingPage({ onGetStarted, onNavigateLogin, currentUser, onLogout }) {
 }
 
 // ─── STRUCTURED 3-COLUMN INSPECTION CONSOLE DASHBOARD ───
-function InspectionConsole({ onBackToLanding, currentUser, onNavigateLogin }) {
+function InspectionConsole({ onBackToLanding, currentUser, onNavigateLogin, onLogout }) {
   const [activeTab, setActiveTab] = useState('main');
   const [isLoading, setIsLoading] = useState(false);
   const [inspectionResult, setInspectionResult] = useState(null);
@@ -932,11 +985,13 @@ function InspectionConsole({ onBackToLanding, currentUser, onNavigateLogin }) {
           </span>
 
           {currentUser ? (
-            <div
-              className="user-avatar-btn"
-              title={`${currentUser.name || 'User'} (${currentUser.email || ''}) • ${currentUser.role || ''}`}
-            >
-              <IconUser size={16} color="#ffffff" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="user-avatar-btn" title={currentUser.username || 'Account'}>
+                <IconUser size={16} color="#ffffff" />
+              </div>
+              <button onClick={onLogout} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>
+                Sign Out
+              </button>
             </div>
           ) : (
             <button onClick={onNavigateLogin} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -1088,15 +1143,44 @@ function InspectionConsole({ onBackToLanding, currentUser, onNavigateLogin }) {
 function App() {
   const [currentView, setCurrentView] = useState('landing');
   const [currentUser, setCurrentUser] = useState(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/auth/session', { credentials: 'same-origin' })
+      .then(response => response.ok ? response.json() : { user: null })
+      .then(result => {
+        if (active && result.user) {
+          setCurrentUser(result.user);
+          setCurrentView('console');
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setSessionLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
 
   const handleLoginSuccess = (userData) => {
     setCurrentUser(userData);
     setCurrentView('console');
   };
 
-  const handleLogout = () => {
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'same-origin' });
+    } catch (error) {
+      console.error('Unable to revoke the login session.', error);
+    } finally {
+      setCurrentUser(null);
+      setCurrentView('landing');
+    }
   };
+
+  if (sessionLoading) {
+    return <div className="auth-session-loading" aria-label="Checking session"><div className="spinner"></div></div>;
+  }
 
   if (currentView === 'login') {
     return <LoginPage onLoginSuccess={handleLoginSuccess} onBackToHome={() => setCurrentView('landing')} />;
@@ -1105,7 +1189,7 @@ function App() {
   if (currentView === 'landing') {
     return (
       <LandingPage
-        onGetStarted={() => setCurrentView('console')}
+        onGetStarted={() => setCurrentView(currentUser ? 'console' : 'login')}
         onNavigateLogin={() => setCurrentView('login')}
         currentUser={currentUser}
         onLogout={handleLogout}
@@ -1118,6 +1202,7 @@ function App() {
       onBackToLanding={() => setCurrentView('landing')}
       onNavigateLogin={() => setCurrentView('login')}
       currentUser={currentUser}
+      onLogout={handleLogout}
     />
   );
 }
