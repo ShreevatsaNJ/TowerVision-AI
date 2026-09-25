@@ -11,13 +11,13 @@ class Settings(BaseModel):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     
-    # Quality Thresholds
-    MIN_LAPLACIAN_BLUR_SCORE: float = 100.0  # Scores below 100 indicate blurry images
-    MIN_BRIGHTNESS: float = 40.0             # Mean luminance (0-255). Below 40 is underexposed
-    MAX_BRIGHTNESS: float = 220.0            # Above 220 is overexposed/washed out
-    MIN_CONTRAST_RMS: float = 25.0           # Standard deviation of pixel intensities
-    MIN_IMAGE_WIDTH: int = 400
-    MIN_IMAGE_HEIGHT: int = 400
+    # Quality Thresholds — Only reject truly unanalyzable images
+    MIN_LAPLACIAN_BLUR_SCORE: float = 15.0   # Only reject extreme blur (canvas-generated blur test ~0-10)
+    MIN_BRIGHTNESS: float = 8.0              # Only reject near-pitch-black images
+    MAX_BRIGHTNESS: float = 248.0            # Only reject completely washed out white
+    MIN_CONTRAST_RMS: float = 5.0            # Only reject flat uniform color images
+    MIN_IMAGE_WIDTH: int = 100
+    MIN_IMAGE_HEIGHT: int = 100
     MAX_IMAGE_SIZE_MB: int = 25
     
     # YOLO Object Detection Configuration

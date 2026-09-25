@@ -14,24 +14,44 @@ function QualityMetricsCard({ qualityData }) {
         </div>
         <div className="card-body">
           <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-tertiary)' }}>
-            Upload or select an inspection photo to run deterministic OpenCV quality gates.
+            Upload or select an inspection photo to run deterministic OpenCV quality gating.
           </div>
         </div>
       </div>
     );
   }
 
-  const { is_usable, health_score, reasons, recommendations, metrics } = qualityData;
+  const is_usable = qualityData.is_usable !== false && qualityData.decision !== 'BAD';
+  const metrics = qualityData.metrics || {};
+  const healthScore = Math.round(
+    metrics.composite_health_score ??
+    qualityData.health_score ??
+    qualityData.composite_health_score ??
+    (is_usable ? 85 : 20)
+  );
+
+  const blurScore = metrics.blur_score ?? metrics.laplacian_variance ?? 0;
+  const brightness = metrics.brightness_mean ?? metrics.mean_brightness ?? 0;
+  const contrast = metrics.contrast_score ?? metrics.contrast_rms ?? 0;
+  const resArray = metrics.resolution || [metrics.width || 0, metrics.height || 0];
+
+  const reasons = qualityData.rejection_reasons || qualityData.reasons || [];
+  const rawRecs = qualityData.recommendations || [];
+  const recommendations = Array.isArray(rawRecs) ? rawRecs : (rawRecs ? [rawRecs] : []);
 
   const strokeDashoffset = useMemo(() => {
     const circumference = 2 * Math.PI * 34; // r = 34
-    const clampedScore = Math.max(0, Math.min(100, health_score || 0));
+    const clampedScore = Math.max(0, Math.min(100, healthScore));
     return circumference - (clampedScore / 100) * circumference;
-  }, [health_score]);
+  }, [healthScore]);
 
-  const blurPct = Math.min(100, ((metrics?.laplacian_variance || 0) / 250) * 100);
-  const brightPct = Math.min(100, ((metrics?.mean_brightness || 0) / 255) * 100);
-  const contrastPct = Math.min(100, ((metrics?.contrast_rms || 0) / 70) * 100);
+  const blurPct = Math.min(100, Math.max(5, (blurScore / 200) * 100));
+  const brightPct = Math.min(100, (brightness / 255) * 100);
+  const contrastPct = Math.min(100, Math.max(5, (contrast / 70) * 100));
+
+  const isSharp = blurScore >= 15.0;
+  const isVisible = brightness >= 8.0 && brightness <= 248.0;
+  const isContrastOk = contrast >= 5.0;
 
   return (
     <div className="card-panel">
@@ -41,7 +61,7 @@ function QualityMetricsCard({ qualityData }) {
           <span className="card-title">Image Quality Assessment</span>
         </div>
         <span className={`verdict-badge ${is_usable ? 'pass' : 'fail'}`}>
-          {is_usable ? 'GATE PASSED' : 'REJECTED (BAD QUALITY)'}
+          {is_usable ? 'GATE PASSED' : 'REJECTED (UNANALYZABLE)'}
         </span>
       </div>
 
@@ -54,7 +74,7 @@ function QualityMetricsCard({ qualityData }) {
                 cx="40"
                 cy="40"
                 r="34"
-                stroke="rgba(51, 65, 85, 0.5)"
+                stroke="rgba(51, 65, 85, 0.2)"
                 strokeWidth="7"
                 fill="none"
               />
@@ -76,19 +96,19 @@ function QualityMetricsCard({ qualityData }) {
               />
             </svg>
             <div className="health-gauge-center">
-              <div className="gauge-val">{Math.round(health_score || 0)}</div>
+              <div className="gauge-val">{healthScore}</div>
               <div className="gauge-max">/ 100</div>
             </div>
           </div>
 
           <div className="health-meta">
-            <div style={{ fontSize: '13px', fontWeight: 600, color: is_usable ? 'var(--status-pass-light)' : 'var(--status-fail-light)' }}>
-              {is_usable ? 'Suitable for Deep Learning' : 'Gating Exited: Defective Input'}
+            <div style={{ fontSize: '13px', fontWeight: 700, color: is_usable ? 'var(--status-pass-light)' : 'var(--status-fail-light)' }}>
+              {is_usable ? 'Image Analyzable — Deep Learning Active' : 'Image Rejected — Unanalyzable'}
             </div>
             <div className="health-summary-text">
               {is_usable
-                ? 'Image satisfies sharpness, luminance, and contrast thresholds for YOLO asset recognition.'
-                : 'Input degraded by focus blur or lighting issues. Inference aborted to save compute and avoid hallucinations.'}
+                ? 'Image visibility and sharpness meet requirements for structural feature extraction and YOLO detection.'
+                : 'Image is too blurry, not visible (underexposed/overexposed), or unanalyzable. Deep learning inference aborted.'}
             </div>
           </div>
         </div>
@@ -99,13 +119,13 @@ function QualityMetricsCard({ qualityData }) {
             <div className="metric-header">
               <span className="metric-title">Laplacian Focus Measure (Sharpness)</span>
               <span className="metric-num">
-                {metrics?.laplacian_variance?.toFixed(1) || '--'}{' '}
-                <small style={{ color: 'var(--text-tertiary)' }}>(min 100)</small>
+                {blurScore.toFixed(1)}{' '}
+                <small style={{ color: 'var(--text-tertiary)' }}>(min 15.0)</small>
               </span>
             </div>
             <div className="meter-track">
               <div
-                className={`meter-bar ${(metrics?.laplacian_variance || 0) >= 100 ? 'green' : 'red'}`}
+                className={`meter-bar ${isSharp ? 'green' : 'red'}`}
                 style={{ width: `${blurPct}%` }}
               ></div>
             </div>
@@ -115,13 +135,13 @@ function QualityMetricsCard({ qualityData }) {
             <div className="metric-header">
               <span className="metric-title">Mean Luminance (Exposure)</span>
               <span className="metric-num">
-                {metrics?.mean_brightness?.toFixed(1) || '--'}{' '}
-                <small style={{ color: 'var(--text-tertiary)' }}>(40 - 220)</small>
+                {brightness.toFixed(1)}{' '}
+                <small style={{ color: 'var(--text-tertiary)' }}>(8 - 248)</small>
               </span>
             </div>
             <div className="meter-track">
               <div
-                className={`meter-bar ${(metrics?.mean_brightness || 0) >= 40 && (metrics?.mean_brightness || 0) <= 220 ? 'green' : 'red'}`}
+                className={`meter-bar ${isVisible ? 'green' : 'red'}`}
                 style={{ width: `${brightPct}%` }}
               ></div>
             </div>
@@ -131,13 +151,13 @@ function QualityMetricsCard({ qualityData }) {
             <div className="metric-header">
               <span className="metric-title">RMS Dynamic Contrast</span>
               <span className="metric-num">
-                {metrics?.contrast_rms?.toFixed(1) || '--'}{' '}
-                <small style={{ color: 'var(--text-tertiary)' }}>(min 25)</small>
+                {contrast.toFixed(1)}{' '}
+                <small style={{ color: 'var(--text-tertiary)' }}>(min 5.0)</small>
               </span>
             </div>
             <div className="meter-track">
               <div
-                className={`meter-bar ${(metrics?.contrast_rms || 0) >= 25 ? 'green' : 'yellow'}`}
+                className={`meter-bar ${isContrastOk ? 'green' : 'red'}`}
                 style={{ width: `${contrastPct}%` }}
               ></div>
             </div>
@@ -147,33 +167,57 @@ function QualityMetricsCard({ qualityData }) {
             <div className="metric-header">
               <span className="metric-title">Resolution Fidelity</span>
               <span className="metric-num">
-                {metrics?.width || '--'} &times; {metrics?.height || '--'} px
+                {resArray[0] || '--'} &times; {resArray[1] || '--'} px
               </span>
             </div>
           </div>
         </div>
 
         {/* Rejection Diagnostics Box */}
-        {!is_usable && reasons && reasons.length > 0 && (
+        {!is_usable && reasons.length > 0 && (
           <div className="advisory-box">
-            <div className="advisory-header">
+            <div className="advisory-header" style={{ color: 'var(--status-fail-light)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
               </svg>
-              <span>Field Diagnostics & Recapture Action</span>
+              <span>Quality Gate Rejection Diagnostic</span>
             </div>
             <ul className="advisory-list">
               {reasons.map((r, i) => (
                 <li key={i}>{r}</li>
               ))}
             </ul>
-            {recommendations && (
-              <div className="advisory-rec">
-                <strong>Field Operator Action:</strong> {recommendations}
+            {recommendations.length > 0 && (
+              <div className="advisory-rec" style={{ marginTop: '8px' }}>
+                <strong>Field Recapture Guidance:</strong>
+                <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                  {recommendations.map((rec, i) => (
+                    <li key={i}>{rec}</li>
+                  ))}
+                </ul>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Advisory Tips for Accepted Images */}
+        {is_usable && recommendations.length > 0 && (
+          <div className="advisory-box" style={{ background: 'rgba(30, 58, 95, 0.05)', borderColor: 'rgba(30, 58, 95, 0.15)' }}>
+            <div className="advisory-header" style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 16v-4"></path>
+                <path d="M12 8h.01"></path>
+              </svg>
+              <span>Quality Optimization Tips</span>
+            </div>
+            <ul className="advisory-list" style={{ color: 'var(--text-secondary)' }}>
+              {recommendations.map((rec, i) => (
+                <li key={i}>{rec}</li>
+              ))}
+            </ul>
           </div>
         )}
       </div>

@@ -24,11 +24,11 @@ def test_sharp_vs_blurry_image():
     assert sharp_score > 100.0
 
 def test_underexposed_image():
-    # Dark image (mean luminance < 20)
-    dark_img = np.full((400, 400, 3), 15, dtype=np.uint8)
-    brightness = compute_brightness_mean(dark_img)
+    # Extreme dark / unanalyzable image (mean luminance < 8.0)
+    pitch_dark_img = np.full((400, 400, 3), 4, dtype=np.uint8)
+    brightness = compute_brightness_mean(pitch_dark_img)
     
-    assert brightness < 40.0
+    assert brightness < 8.0
     
     is_usable, reasons, recs, score = evaluate_quality_rules(
         blur_score=150.0,
@@ -41,7 +41,7 @@ def test_underexposed_image():
     )
     
     assert is_usable is False
-    assert any("underexposed" in r.lower() for r in reasons)
+    assert any("not visible" in r.lower() or "dark" in r.lower() for r in reasons)
 
 def test_good_quality_image():
     is_usable, reasons, recs, score = evaluate_quality_rules(

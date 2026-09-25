@@ -23,7 +23,24 @@ class ImageQualityAssessor:
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
         if img is None:
-            raise ValueError("Corrupt or invalid image file. Unable to decode.")
+            metrics = QualityMetrics(
+                blur_score=0.0,
+                brightness_mean=0.0,
+                contrast_score=0.0,
+                resolution=[0, 0],
+                composite_health_score=0.0,
+                is_sharp=False,
+                is_well_lit=False,
+                is_good_contrast=False,
+                is_sufficient_resolution=False
+            )
+            return QualityDecision(
+                is_usable=False,
+                decision="BAD",
+                metrics=metrics,
+                rejection_reasons=["Image rejected: Cannot access or decode file. File is corrupt, unreadable, or not a supported image."],
+                recommendations=["Re-upload a valid, uncorrupted JPEG, PNG, or WEBP image file."]
+            )
             
         height, width = img.shape[:2]
         

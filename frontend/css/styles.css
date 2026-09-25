@@ -344,12 +344,6 @@ h1, h2, h3, h4, h5 { font-weight: 700; color: var(--text-primary); letter-spacin
   transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30, 58, 95, 0.2);
 }
 
-.btn-preset:hover {
-  background: var(--accent-primary); color: #ffffff;
-  border-color: var(--accent-primary);
-  transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30, 58, 95, 0.2);
-}
-
 /* ═══ CANVAS FILTER PILLS ═══ */
 .filter-tags-wrap {
   display: flex;
