@@ -60,9 +60,8 @@ function CanvasViewer({
     const container = containerRef.current;
     if (!container) return;
 
-    // Set fixed canvas dimensions to prevent height expansion loop on hover
     const width = container.clientWidth || 800;
-    const height = 480;
+    const height = container.clientHeight || 540;
     if (canvas.width !== width) canvas.width = width;
     if (canvas.height !== height) canvas.height = height;
 
@@ -72,21 +71,23 @@ function CanvasViewer({
 
     const img = imgRef.current;
 
-    // Calculate aspect-ratio fit
+    // Calculate maximum aspect-ratio fit to fill the container neatly
     const imgAspect = img.width / img.height;
-    const canvasAspect = width / height;
+    const padding = 8;
+    const availW = Math.max(100, width - padding * 2);
+    const availH = Math.max(100, height - padding * 2);
 
-    let drawW, drawH, drawX, drawY;
-    if (canvasAspect > imgAspect) {
-      drawH = height * 0.92;
+    let drawW, drawH;
+    if (availW / availH > imgAspect) {
+      drawH = availH;
       drawW = drawH * imgAspect;
     } else {
-      drawW = width * 0.92;
+      drawW = availW;
       drawH = drawW / imgAspect;
     }
 
-    drawX = (width - drawW) / 2 + panOffset.x;
-    drawY = (height - drawH) / 2 + panOffset.y;
+    const drawX = (width - drawW) / 2 + panOffset.x;
+    const drawY = (height - drawH) / 2 + panOffset.y;
 
     // Apply zoom transformation
     ctx.save();
@@ -94,7 +95,9 @@ function CanvasViewer({
     ctx.scale(zoomLevel, zoomLevel);
     ctx.translate(-width / 2, -height / 2);
 
-    // Draw background image
+    // Draw background image smoothly
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, drawX, drawY, drawW, drawH);
 
     // Render bounding boxes if enabled
@@ -134,19 +137,19 @@ function CanvasViewer({
 
         // Pill Tag Header
         const labelText = `${class_name} ${(confidence * 100).toFixed(0)}%`;
-        ctx.font = '600 11px Plus Jakarta Sans, sans-serif';
+        ctx.font = '600 11.5px Plus Jakarta Sans, sans-serif';
         const textMetrics = ctx.measureText(labelText);
-        const tagH = 18;
-        const tagW = textMetrics.width + 12;
+        const tagH = 19;
+        const tagW = textMetrics.width + 14;
 
         ctx.fillStyle = isHovered ? '#ffffff' : color;
         ctx.fillRect(x, Math.max(0, y - tagH), tagW, tagH);
 
-        ctx.fillStyle = isHovered ? '#0f172a' : '#0f172a';
+        ctx.fillStyle = '#0f172a';
         ctx.textBaseline = 'middle';
-        ctx.fillText(labelText, x + 6, Math.max(0, y - tagH) + tagH / 2);
+        ctx.fillText(labelText, x + 7, Math.max(0, y - tagH) + tagH / 2);
 
-        // Warning triangle indicator for defects
+        // Defect highlight
         if (severity === 'CRITICAL' || severity === 'WARNING') {
           ctx.strokeStyle = '#ef4444';
           ctx.lineWidth = 2;
@@ -160,6 +163,13 @@ function CanvasViewer({
 
   useEffect(() => {
     draw();
+  }, [draw]);
+
+  // Handle Resize
+  useEffect(() => {
+    const handleResize = () => draw();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [draw]);
 
   // Handle Mouse Hover on Canvas for BBox detection
@@ -182,18 +192,20 @@ function CanvasViewer({
     const height = canvas.height;
     const img = imgRef.current;
     const imgAspect = img.width / img.height;
-    const canvasAspect = width / height;
+    const padding = 8;
+    const availW = Math.max(100, width - padding * 2);
+    const availH = Math.max(100, height - padding * 2);
 
-    let drawW, drawH, drawX, drawY;
-    if (canvasAspect > imgAspect) {
-      drawH = height * 0.92;
+    let drawW, drawH;
+    if (availW / availH > imgAspect) {
+      drawH = availH;
       drawW = drawH * imgAspect;
     } else {
-      drawW = width * 0.92;
+      drawW = availW;
       drawH = drawW / imgAspect;
     }
-    drawX = (width - drawW) / 2 + panOffset.x;
-    drawY = (height - drawH) / 2 + panOffset.y;
+    const drawX = (width - drawW) / 2 + panOffset.x;
+    const drawY = (height - drawH) / 2 + panOffset.y;
 
     const scaleX = drawW / img.width;
     const scaleY = drawH / img.height;
@@ -246,41 +258,26 @@ function CanvasViewer({
 
   return (
     <div className="card-panel canvas-panel">
-      <div className="canvas-toolbar">
-        <div className="toolbar-group">
+      <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card-title-group">
+          <span className="stage-number">STAGE 2</span>
+          <span className="card-title">Inspection Viewport</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
-            className={`btn-tool ${showBoxes ? 'active' : ''}`}
+            className={`filter-tag-pill ${showBoxes ? 'active' : ''}`}
             onClick={() => setShowBoxes(!showBoxes)}
+            style={{ fontSize: '11.5px', padding: '5px 12px' }}
           >
-            {showBoxes ? <><IconEye style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> BBoxes Visible</> : <><IconEyeOff style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> BBoxes Hidden</>}
+            {showBoxes ? <><IconEye size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> BBoxes Visible</> : <><IconEyeOff size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> BBoxes Hidden</>}
           </button>
-
-          <button className="btn-tool" onClick={() => setZoomLevel(z => Math.min(3.5, z + 0.2))}>
-            <IconZoomIn style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />+
-          </button>
-          <button className="btn-tool" onClick={() => setZoomLevel(z => Math.max(0.6, z - 0.2))}>
-            <IconZoomOut style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />-
-          </button>
-          <button className="btn-tool" onClick={resetView}>
+          <button
+            className="filter-tag-pill"
+            onClick={resetView}
+            style={{ fontSize: '11.5px', padding: '5px 12px' }}
+          >
             Fit View
           </button>
-        </div>
-
-        <div className="toolbar-group">
-          <div className="slider-group">
-            <span>Min Conf:</span>
-            <input
-              type="range"
-              min="0.30"
-              max="0.95"
-              step="0.05"
-              value={minConfidence}
-              onChange={(e) => onChangeMinConfidence(parseFloat(e.target.value))}
-            />
-            <span className="mono" style={{ minWidth: '38px', color: 'var(--text-primary)' }}>
-              {Math.round(minConfidence * 100)}%
-            </span>
-          </div>
         </div>
       </div>
 

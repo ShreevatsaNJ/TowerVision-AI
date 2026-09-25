@@ -606,12 +606,11 @@ function LandingPage({ onGetStarted, onNavigateLogin, currentUser, onLogout }) {
 
           {currentUser && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div className="user-profile-badge">
-                <div className="user-avatar">{currentUser.name.charAt(0)}</div>
-                <div className="user-info-text">
-                  <span className="user-name">{currentUser.name}</span>
-                  <span className="user-role">{currentUser.role}</span>
-                </div>
+              <div
+                className="user-avatar-btn"
+                title={`${currentUser.name || 'User'} (${currentUser.email || ''})`}
+              >
+                <IconUser size={16} color="#ffffff" />
               </div>
               <button onClick={onLogout} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>Sign Out</button>
             </div>
@@ -815,7 +814,10 @@ function InspectionConsole({ onBackToLanding, currentUser, onNavigateLogin }) {
       }
       const data = await response.json();
       setInspectionResult(data);
-      if (data.annotated_image_url) setRawImageUrl(data.annotated_image_url);
+      // Retain clean original image for crisp, interactive HTML5 canvas bounding box overlays
+      if (data.original_image_url) {
+        setRawImageUrl(data.original_image_url);
+      }
     } catch (err) {
       alert('Inspection Failure: ' + err.message);
     } finally {
@@ -930,12 +932,11 @@ function InspectionConsole({ onBackToLanding, currentUser, onNavigateLogin }) {
           </span>
 
           {currentUser ? (
-            <div className="user-profile-badge">
-              <div className="user-avatar">{currentUser.name.charAt(0)}</div>
-              <div className="user-info-text">
-                <span className="user-name">{currentUser.name}</span>
-                <span className="user-role">{currentUser.role}</span>
-              </div>
+            <div
+              className="user-avatar-btn"
+              title={`${currentUser.name || 'User'} (${currentUser.email || ''}) • ${currentUser.role || ''}`}
+            >
+              <IconUser size={16} color="#ffffff" />
             </div>
           ) : (
             <button onClick={onNavigateLogin} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
