@@ -21,7 +21,10 @@ class Settings(BaseModel):
     MAX_IMAGE_SIZE_MB: int = 25
     
     # YOLO Object Detection Configuration
-    YOLO_MODEL_PATH: str = os.getenv("YOLO_MODEL_PATH", "yolov8n.pt")
+    YOLO_MODEL_PATH: str = os.getenv(
+        "YOLO_MODEL_PATH",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "ML Model.zip"))
+    )
     DETECTION_CONFIDENCE_THRESHOLD: float = 0.35
     IOU_THRESHOLD: float = 0.45
     

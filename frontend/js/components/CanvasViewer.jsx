@@ -126,8 +126,10 @@ function CanvasViewer({
 
         // Fill overlay for highlight
         if (isHovered) {
-          ctx.fillStyle = color.replace(')', ', 0.25)').replace('rgb', 'rgba');
+          ctx.globalAlpha = 0.22;
+          ctx.fillStyle = color;
           ctx.fillRect(x, y, w, h);
+          ctx.globalAlpha = 1;
         }
 
         // Pill Tag Header

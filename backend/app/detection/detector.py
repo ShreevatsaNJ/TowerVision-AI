@@ -1,3 +1,6 @@
+import os
+import shutil
+import tempfile
 import time
 import cv2
 import numpy as np
@@ -15,14 +18,25 @@ class YOLOTowerDetector:
         self._load_model()
         
     def _load_model(self):
+        staged_model_path = None
         try:
             from ultralytics import YOLO
-            # Load default lightweight YOLO or custom fine-tuned weights
-            self.model = YOLO(settings.YOLO_MODEL_PATH)
+
+            model_path = settings.YOLO_MODEL_PATH
+            if os.path.splitext(model_path)[1].lower() == ".zip":
+                with tempfile.NamedTemporaryFile(suffix=".pt", delete=False) as checkpoint:
+                    staged_model_path = checkpoint.name
+                shutil.copyfile(model_path, staged_model_path)
+                model_path = staged_model_path
+
+            self.model = YOLO(model_path)
             print(f"[INFO] YOLO Model loaded successfully: {settings.YOLO_MODEL_PATH}")
         except Exception as e:
             print(f"[WARNING] Notice: YOLO model loading in fallback simulation mode: {e}")
             self.model = None
+        finally:
+            if staged_model_path and os.path.exists(staged_model_path):
+                os.remove(staged_model_path)
 
     def detect(self, image_np: np.ndarray) -> Tuple[DetectionSummary, np.ndarray]:
         start_time = time.time()

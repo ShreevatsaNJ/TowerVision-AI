@@ -131,7 +131,7 @@ TowerVision-AI/
   - `MIN_BRIGHTNESS = 40.0` & `MAX_BRIGHTNESS = 220.0`: Acceptable luminance range $(0-255)$.
   - `MIN_CONTRAST_RMS = 25.0`: Minimum standard deviation of pixel intensities.
   - `MIN_IMAGE_WIDTH` & `MIN_IMAGE_HEIGHT = 400`: Minimum resolution limits.
-  - `YOLO_MODEL_PATH = "yolov8n.pt"`: Model weights file path.
+  - `YOLO_MODEL_PATH`: Defaults to the bundled `backend/ML Model.zip` checkpoint; can be overridden with an environment variable.
   - `DETECTION_CONFIDENCE_THRESHOLD = 0.35`: Confidence cutoff for detections.
 - **Side Effects**: Automatically creates local directories for `storage/uploads`, `storage/processed`, and `storage/reports`.
 

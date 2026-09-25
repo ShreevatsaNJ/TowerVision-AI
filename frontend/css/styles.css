@@ -424,6 +424,25 @@ h1, h2, h3, h4, h5 { font-weight: 700; color: var(--text-primary); letter-spacin
   display: block;
 }
 
+.canvas-hud-tooltip {
+  position: absolute;
+  z-index: 2;
+  max-width: calc(100% - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--border-default);
+  border-left: 4px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+  white-space: normal;
+  pointer-events: none;
+}
+
 .hud-overlay {
   position: absolute; top: 14px; left: 14px; right: 14px;
   display: flex; justify-content: space-between; align-items: flex-start;
